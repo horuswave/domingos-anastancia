@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin, requireEventAccess } from "@/lib/guards";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import type { RsvpFields } from "@/components/invitation/RsvpForm";
+import type { ProgramItem } from "@/components/invitation/ProgramSection";
 
 export async function getAllEvents() {
   await requireSuperAdmin();
@@ -208,15 +210,31 @@ export async function updateMyEvent(
     backgroundStyle: "DARK" | "LIGHT" | "IMAGE";
     fontDisplay: string;
     fontBody: string;
-    programItems: unknown;
-    rsvpFields: unknown;
+    programItems: ProgramItem[];
+    rsvpFields: RsvpFields;
   }>,
 ) {
   const { eventId } = await requireEventAccess();
-  const event = await prisma.event.update({
+
+  // Extract and serialize Json fields separately to avoid Prisma's conflicting
+  // generated types between node_modules/.prisma and generated/prisma paths.
+  const { programItems, rsvpFields, date, ...rest } = data;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const event = await (prisma.event.update as any)({
     where: { id: eventId },
-    data: { ...data, ...(data.date ? { date: new Date(data.date) } : {}) },
+    data: {
+      ...rest,
+      ...(date ? { date: new Date(date) } : {}),
+      ...(programItems !== undefined
+        ? { programItems: JSON.parse(JSON.stringify(programItems)) }
+        : {}),
+      ...(rsvpFields !== undefined
+        ? { rsvpFields: JSON.parse(JSON.stringify(rsvpFields)) }
+        : {}),
+    },
   });
+
   revalidatePath("/admin/dashboard");
   revalidatePath("/admin/settings");
   return event;
