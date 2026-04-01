@@ -91,7 +91,7 @@ export default function EventDetails({ event }: { event: EventData }) {
 
           <Card
             icon={<Clock className="w-5 h-5" />}
-            title="Data e Hora"
+            title="Data"
             primaryColor={event.primaryColor}
             fontDisplay={event.fontDisplay}
             fontBody={event.fontBody}
