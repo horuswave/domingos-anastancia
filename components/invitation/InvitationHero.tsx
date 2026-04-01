@@ -288,7 +288,7 @@ export default function InvitationHero({
                     margin: 0,
                   }}
                 >
-                  Querido(a) Convidado(a)
+                  Estimado(a)
                 </p>
 
                 <p
@@ -319,7 +319,7 @@ export default function InvitationHero({
             </div>
           )}
 
-          <div
+          {/* <div
             className="hero-fade-up"
             style={{
               animationDelay: "0.9s",
@@ -368,7 +368,7 @@ export default function InvitationHero({
             >
               {event.venue}
             </p>
-          </div>
+          </div> */}
         </div>
 
         <div

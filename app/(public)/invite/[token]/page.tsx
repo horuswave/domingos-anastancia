@@ -64,8 +64,8 @@ export default async function InvitationPage({
   return (
     <main>
       <InvitationHero event={event} guestName={guest.primaryName} />
-      <EventDetails event={event} />
       <ProgramSection event={event} />
+      <EventDetails event={event} />
       <RsvpForm
         token={token}
         maxAllowed={guest.maxAllowed}

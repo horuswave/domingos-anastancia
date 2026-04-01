@@ -89,7 +89,7 @@ export default function EventDetails({ event }: { event: EventData }) {
             )}
           </Card>
 
-          <Card
+          {/* <Card
             icon={<Clock className="w-5 h-5" />}
             title="Data"
             primaryColor={event.primaryColor}
@@ -104,10 +104,8 @@ export default function EventDetails({ event }: { event: EventData }) {
                 year: "numeric",
               })}
             </p>
-            {/* <p className="text-stone-500 text-sm mt-2">
-              Recepção a partir das {formatTime24h(event.time)}
-            </p> */}
-          </Card>
+           
+          </Card> */}
 
           {event.dressCode && (
             <Card
