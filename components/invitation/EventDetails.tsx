@@ -1,6 +1,35 @@
 import { EventData } from "@/types";
 import { MapPin, Clock, Shirt, Info, Phone, Mail } from "lucide-react";
 
+// Helper function to format time in 24-hour format
+function formatTime24h(time: string): string {
+  // If time is already in 24h format like "14:30", return as is
+  if (/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)) {
+    return time;
+  }
+
+  // If time is in 12h format like "2:30 PM" or "02:30 PM"
+  try {
+    // Parse the time string
+    const [timePart, period] = time.split(" ");
+    let [hours, minutes] = timePart.split(":");
+    let hour24 = parseInt(hours);
+
+    if (period) {
+      const isPM = period.toUpperCase() === "PM";
+      const is12 = hour24 === 12;
+
+      if (isPM && !is12) hour24 += 12;
+      if (!isPM && is12) hour24 = 0;
+    }
+
+    return `${hour24.toString().padStart(2, "0")}:${minutes}`;
+  } catch {
+    // If parsing fails, return original
+    return time;
+  }
+}
+
 export default function EventDetails({ event }: { event: EventData }) {
   const rules = event.rules?.split("\n").filter(Boolean) ?? [];
 
@@ -24,8 +53,6 @@ export default function EventDetails({ event }: { event: EventData }) {
               style={{ backgroundColor: event.primaryColor, opacity: 0.3 }}
             />
           </div>
-
-        
 
           <p
             className="mt-4 text-stone-500 text-sm md:text-base max-w-2xl mx-auto leading-7"
@@ -78,7 +105,7 @@ export default function EventDetails({ event }: { event: EventData }) {
               })}
             </p>
             <p className="text-stone-500 text-sm mt-2">
-              Recepção a partir das {event.time}
+              Recepção a partir das {formatTime24h(event.time)}
             </p>
           </Card>
 
