@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider   = "prisma-client"
+  output     = "../generated/prisma"
+  engineType = "client"
+}
+
+
+
+model AdminUser {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  name         String
+  isSuperAdmin Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  eventAdmins  EventAdmin[]
+}
+
+model EventAdmin {
+  id          String    @id @default(cuid())
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([adminUserId, eventId])
+}
+
+model Event {
+  id           String   @id @default(cuid())
+  title        String
+  coupleNames  String
+  date         DateTime
+  time         String
+  venue        String
+  address      String
+  mapUrl       String?
+  dressCode    String?
+  message      String?  @db.Text
+  rules        String?  @db.Text
+  supportEmail String?
+  supportPhone String?
+
+  // Branding
+  primaryColor    String          @default("#c8890e")
+  accentColor     String          @default("#0e0b07")
+  heroImageUrl    String?
+  logoUrl         String?
+  fontDisplay     String          @default("Cormorant Garamond")
+  fontBody        String          @default("Jost")
+  backgroundStyle BackgroundStyle @default(DARK)
+
+  // Program timeline — ordered array of { id, type, label, time, notes? }
+  programItems Json @default("[]")
+
+  // RSVP form field visibility — { companions, dietary, transport, message }
+  rsvpFields Json @default("{\"companions\":true,\"dietary\":true,\"transport\":true,\"message\":true}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guests      Guest[]
+  tables      Table[]
+  eventAdmins EventAdmin[]
+}
+
+model Guest {
+  id               String        @id @default(cuid())
+  eventId          String
+  event            Event         @relation(fields: [eventId], references: [id])
+  primaryName      String
+  email            String?
+  phone            String?
+  preferredContact ContactMethod @default(EMAIL)
+  token            String        @unique @default(uuid())
+  maxAllowed       Int           @default(2)
+  rsvpStatus       RsvpStatus    @default(PENDING)
+  rsvpSubmittedAt  DateTime?
+  tableId          String?
+  table            Table?        @relation(fields: [tableId], references: [id])
+  notes            String?       @db.Text
+  isVip            Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  rsvp        Rsvp?
+  companions  GuestCompanion[]
+  messageLogs MessageLog[]
+}
+
+model Rsvp {
+  id                  String   @id @default(cuid())
+  guestId             String   @unique
+  guest               Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  attending           Boolean
+  totalAttending      Int      @default(1)
+  dietaryRestrictions String?  @db.Text
+  transportNotes      String?  @db.Text
+  coupleMessage       String?  @db.Text
+  ipAddress           String?
+  submittedAt         DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model GuestCompanion {
+  id                  String  @id @default(cuid())
+  guestId             String
+  guest               Guest   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  name                String
+  dietaryRestrictions String?
+}
+
+model Table {
+  id       String  @id @default(cuid())
+  eventId  String
+  event    Event   @relation(fields: [eventId], references: [id])
+  name     String
+  capacity Int
+  notes    String?
+  guests   Guest[]
+}
+
+model MessageLog {
+  id          String         @id @default(cuid())
+  guestId     String
+  guest       Guest          @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  channel     ContactMethod
+  messageType MessageType
+  sentAt      DateTime       @default(now())
+  status      DeliveryStatus @default(SENT)
+  externalId  String?
+  errorDetail String?
+}
+
+enum ContactMethod {
+  EMAIL
+  WHATSAPP
+  SMS
+  MANUAL
+}
+
+enum RsvpStatus {
+  PENDING
+  ATTENDING
+  DECLINED
+  MAYBE
+}
+
+enum MessageType {
+  INVITATION
+  REMINDER
+  CONFIRMATION
+  CUSTOM
+}
+
+enum DeliveryStatus {
+  SENT
+  DELIVERED
+  FAILED
+  PENDING
+}
+
+enum BackgroundStyle {
+  DARK
+  LIGHT
+  IMAGE
+}
