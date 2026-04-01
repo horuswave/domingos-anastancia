@@ -1,6 +1,6 @@
 import { EventData } from "@/types";
-import { MapPin, Clock, Shirt, Info, Phone, Mail } from "lucide-react";
-
+import { MapPin, Shirt, Info, Phone, Mail } from "lucide-react";
+import ProgramSection from "./ProgramSection";
 // Helper function to format time in 24-hour format
 function formatTime24h(time: string): string {
   // If time is already in 24h format like "14:30", return as is

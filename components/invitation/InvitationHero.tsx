@@ -2,14 +2,11 @@ import { EventData } from "@/types";
 
 // Helper function to format time in 24-hour format
 function formatTime24h(time: string): string {
-  // If time is already in 24h format like "14:30", return as is
   if (/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)) {
     return time;
   }
 
-  // If time is in 12h format like "2:30 PM" or "02:30 PM"
   try {
-    // Parse the time string
     const [timePart, period] = time.split(" ");
     let [hours, minutes] = timePart.split(":");
     let hour24 = parseInt(hours);
@@ -24,7 +21,6 @@ function formatTime24h(time: string): string {
 
     return `${hour24.toString().padStart(2, "0")}:${minutes}`;
   } catch {
-    // If parsing fails, return original
     return time;
   }
 }
@@ -44,7 +40,7 @@ export default function InvitationHero({
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=EB+Garamond:wght@400;500&family=Inter:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=EB+Garamond:wght@400;500&family=Inter:wght@300;400;500&family=Imperial+Script&display=swap');
 
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(22px); }
@@ -56,8 +52,43 @@ export default function InvitationHero({
           to { opacity: 1; }
         }
 
+        @keyframes glitterShift {
+          0%   { background-position: 0% 0%; }
+          100% { background-position: 100% 100%; }
+        }
+
         .hero-fade-up { opacity: 0; animation: fadeUp 0.9s ease forwards; }
         .hero-fade-in { opacity: 0; animation: fadeIn 1.2s ease forwards; }
+
+        .glitter-text {
+          display: inline-block;
+          font-family: 'Imperial Script', cursive;
+          font-size: clamp(3.8rem, 10vw, 7rem);
+          line-height: 1.05;
+          font-weight: 400;
+          letter-spacing: 0.01em;
+          margin-bottom: 1rem;
+          opacity: 0;
+          animation: fadeUp 5.2s ease forwards, glitterShift 7.5s ease-in-out infinite alternate;
+          animation-delay: 0.42s;
+          background: linear-gradient(
+            105deg,
+            ${event.primaryColor} 0%,
+            #fff8dc 15%,
+            ${event.primaryColor} 25%,
+            #fffacd 38%,
+            #c8a951 48%,
+            #fff5b0 58%,
+            ${event.primaryColor} 70%,
+            #ffe066 82%,
+            ${event.primaryColor} 90%,
+            #fff8dc 100%
+          );
+          background-size: 250% 250%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
       `}</style>
 
       <section
@@ -178,23 +209,7 @@ export default function InvitationHero({
             Celebramos cinco décadas de amor, cumplicidade e elegância
           </p>
 
-          <h1
-            className="hero-fade-up"
-            style={{
-              fontFamily: event.fontDisplay,
-              fontSize: "clamp(3.4rem, 9vw, 6.2rem)",
-              lineHeight: 0.95,
-              color: textPrimary,
-              fontWeight: 400,
-              marginBottom: "1rem",
-              animationDelay: "0.4s",
-              overflowWrap: "break-word",
-              wordBreak: "break-word",
-              textShadow: isDark ? "0 8px 30px rgba(0,0,0,0.24)" : "none",
-            }}
-          >
-            {event.coupleNames}
-          </h1>
+          <h1 className="glitter-text">{event.coupleNames}</h1>
 
           <p
             className="hero-fade-up"

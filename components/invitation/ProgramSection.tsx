@@ -253,7 +253,7 @@ export default function ProgramSection({
   if (items.length === 0) return null;
 
   return (
-    <section className="bg-white py-24 px-6">
+    <section className="bg-[#fbf7f1] py-24 px-6">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-16">
           <div className="flex items-center justify-center gap-4 mb-5">
