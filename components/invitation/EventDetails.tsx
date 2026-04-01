@@ -104,9 +104,9 @@ export default function EventDetails({ event }: { event: EventData }) {
                 year: "numeric",
               })}
             </p>
-            <p className="text-stone-500 text-sm mt-2">
+            {/* <p className="text-stone-500 text-sm mt-2">
               Recepção a partir das {formatTime24h(event.time)}
-            </p>
+            </p> */}
           </Card>
 
           {event.dressCode && (
