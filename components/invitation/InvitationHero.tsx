@@ -211,7 +211,7 @@ export default function InvitationHero({
 
           <h1 className="glitter-text">{event.coupleNames}</h1>
 
-          <p
+          {/* <p
             className="hero-fade-up"
             style={{
               fontFamily: event.fontDisplay,
@@ -223,7 +223,7 @@ export default function InvitationHero({
             }}
           >
             Jornada de Amor — 50 Anos
-          </p>
+          </p> */}
 
           <div
             className="hero-fade-up"
