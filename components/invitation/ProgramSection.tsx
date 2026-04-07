@@ -302,9 +302,7 @@ export default function ProgramSection({
             className="mt-4 text-stone-500 text-sm md:text-base max-w-xl mx-auto leading-7"
             style={{ fontFamily: event.fontBody }}
           >
-            Um percurso desenhado com momentos especiais, do primeiro brinde ao
-            último abraço.
-          </p>
+            Um percurso desenhado com momentos especiais
         </div>
 
         <div className="relative pl-2 md:pl-4">
