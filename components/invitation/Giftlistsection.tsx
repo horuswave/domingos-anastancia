@@ -266,7 +266,6 @@ function GiftCard({
                   value={item.mobileWalletHolderName}
                   fontBody={fontBody}
                   primaryColor={primaryColor}
-                  copyable
                 />
               )}
             </div>
