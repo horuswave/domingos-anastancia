@@ -1,45 +1,17 @@
 import { EventData } from "@/types";
-import { MapPin, Shirt, Info, Phone, Mail } from "lucide-react";
-import ProgramSection from "./ProgramSection";
-// Helper function to format time in 24-hour format
-function formatTime24h(time: string): string {
-  // If time is already in 24h format like "14:30", return as is
-  if (/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)) {
-    return time;
-  }
-
-  // If time is in 12h format like "2:30 PM" or "02:30 PM"
-  try {
-    // Parse the time string
-    const [timePart, period] = time.split(" ");
-    let [hours, minutes] = timePart.split(":");
-    let hour24 = parseInt(hours);
-
-    if (period) {
-      const isPM = period.toUpperCase() === "PM";
-      const is12 = hour24 === 12;
-
-      if (isPM && !is12) hour24 += 12;
-      if (!isPM && is12) hour24 = 0;
-    }
-
-    return `${hour24.toString().padStart(2, "0")}:${minutes}`;
-  } catch {
-    // If parsing fails, return original
-    return time;
-  }
-}
+import { Info, Phone, Mail } from "lucide-react";
 
 export default function EventDetails({ event }: { event: EventData }) {
   const rules = event.rules?.split("\n").filter(Boolean) ?? [];
 
   return (
     <section className="bg-[#fbf7f1] py-24 px-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-14">
-          <div className="flex items-center justify-center gap-4 mb-5">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <div className="flex items-center justify-center gap-4 mb-6">
             <div
-              className="h-px w-14"
+              className="h-px w-12"
               style={{ backgroundColor: event.primaryColor, opacity: 0.3 }}
             />
             <h2
@@ -49,13 +21,13 @@ export default function EventDetails({ event }: { event: EventData }) {
               Detalhes do Evento
             </h2>
             <div
-              className="h-px w-14"
+              className="h-px w-12"
               style={{ backgroundColor: event.primaryColor, opacity: 0.3 }}
             />
           </div>
 
           <p
-            className="mt-4 text-stone-500 text-sm md:text-base max-w-2xl mx-auto leading-7"
+            className="text-stone-500 text-[15px] max-w-lg mx-auto leading-relaxed"
             style={{ fontFamily: event.fontBody }}
           >
             Reunimos abaixo as informações essenciais para que a sua presença
@@ -63,132 +35,82 @@ export default function EventDetails({ event }: { event: EventData }) {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card
-            icon={<MapPin className="w-5 h-5" />}
-            title="Local"
-            primaryColor={event.primaryColor}
-            fontDisplay={event.fontDisplay}
-            fontBody={event.fontBody}
-          >
-            <p className="text-stone-800 font-medium text-sm">{event.venue}</p>
-            <p className="text-stone-500 text-sm mt-2 leading-6">
-              {event.address}
-            </p>
-
-            {event.mapUrl && (
-              <a
-                href={event.mapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center mt-5 text-sm underline underline-offset-4"
-                style={{ color: event.primaryColor }}
+        {/* Information Cards - Centered */}
+        <div className="flex justify-center">
+          <div className="w-full max-w-2xl">
+            {rules.length > 0 && (
+              <Card
+                icon={<Info className="w-5 h-5" />}
+                title="Informações Úteis"
+                primaryColor={event.primaryColor}
+                fontDisplay={event.fontDisplay}
+                fontBody={event.fontBody}
               >
-                Abrir no Google Maps
-              </a>
+                <ul className="space-y-3">
+                  {rules.map((rule, i) => (
+                    <li
+                      key={i}
+                      className="text-stone-600 text-[15px] leading-relaxed flex gap-3"
+                    >
+                      <span
+                        className="mt-2.5 h-1.5 w-1.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: event.primaryColor }}
+                      />
+                      <span>{rule}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
             )}
-          </Card>
-
-          {/* <Card
-            icon={<Clock className="w-5 h-5" />}
-            title="Data"
-            primaryColor={event.primaryColor}
-            fontDisplay={event.fontDisplay}
-            fontBody={event.fontBody}
-          >
-            <p className="text-stone-800 font-medium text-sm capitalize">
-              {new Date(event.date).toLocaleDateString("pt-PT", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </p>
-           
-          </Card> */}
-
-          {event.dressCode && (
-            <Card
-              icon={<Shirt className="w-5 h-5" />}
-              title="Código de Vestuário"
-              primaryColor={event.primaryColor}
-              fontDisplay={event.fontDisplay}
-              fontBody={event.fontBody}
-            >
-              <p className="text-stone-600 text-sm leading-6">
-                {event.dressCode}
-              </p>
-            </Card>
-          )}
-
-          {rules.length > 0 && (
-            <Card
-              icon={<Info className="w-5 h-5" />}
-              title="Informações Úteis"
-              primaryColor={event.primaryColor}
-              fontDisplay={event.fontDisplay}
-              fontBody={event.fontBody}
-            >
-              <ul className="space-y-2">
-                {rules.map((r, i) => (
-                  <li
-                    key={i}
-                    className="text-stone-600 text-sm leading-6 flex gap-3"
-                  >
-                    <span
-                      className="mt-2 h-1.5 w-1.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: event.primaryColor }}
-                    />
-                    <span>{r}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
+          </div>
         </div>
 
+        {/* Contact Section */}
         {(event.supportEmail || event.supportPhone) && (
-          <div className="mt-14">
-            <div className="rounded-[28px] border border-stone-200/80 bg-white/80 backdrop-blur-sm px-8 py-8 text-center shadow-[0_18px_50px_rgba(120,98,72,0.08)]">
-              <p
-                className="text-stone-500 text-sm mb-5"
-                style={{ fontFamily: event.fontBody }}
-              >
-                Para qualquer questão adicional, teremos todo o gosto em ajudar.
-              </p>
+          <div className="mt-16 flex justify-center">
+            <div className="w-full max-w-2xl">
+              <div className="rounded-[28px] border border-stone-200/80 bg-white/80 backdrop-blur-sm px-8 py-10 text-center shadow-[0_18px_50px_rgba(120,98,72,0.08)]">
+                <p
+                  className="text-stone-500 text-[15px] mb-7 leading-relaxed"
+                  style={{ fontFamily: event.fontBody }}
+                >
+                  Para qualquer questão adicional, teremos todo o gosto em
+                  ajudar.
+                </p>
 
-              <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-                {event.supportEmail && (
-                  <a
-                    href={`mailto:${event.supportEmail}`}
-                    className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-opacity hover:opacity-75"
-                    style={{
-                      color: event.primaryColor,
-                      fontFamily: event.fontBody,
-                      borderColor: `${event.primaryColor}33`,
-                      backgroundColor: `${event.primaryColor}08`,
-                    }}
-                  >
-                    <Mail className="w-4 h-4" />
-                    {event.supportEmail}
-                  </a>
-                )}
+                <div className="flex flex-wrap justify-center gap-4">
+                  {event.supportEmail && (
+                    <a
+                      href={`mailto:${event.supportEmail}`}
+                      className="inline-flex items-center gap-2.5 rounded-full border px-6 py-3 text-sm transition-all hover:opacity-80 active:scale-[0.985]"
+                      style={{
+                        color: event.primaryColor,
+                        fontFamily: event.fontBody,
+                        borderColor: `${event.primaryColor}33`,
+                        backgroundColor: `${event.primaryColor}08`,
+                      }}
+                    >
+                      <Mail className="w-4 h-4" />
+                      {event.supportEmail}
+                    </a>
+                  )}
 
-                {event.supportPhone && (
-                  <a
-                    href={`tel:${event.supportPhone}`}
-                    className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-opacity hover:opacity-75"
-                    style={{
-                      color: event.primaryColor,
-                      fontFamily: event.fontBody,
-                      borderColor: `${event.primaryColor}33`,
-                      backgroundColor: `${event.primaryColor}08`,
-                    }}
-                  >
-                    <Phone className="w-4 h-4" />
-                    {event.supportPhone}
-                  </a>
-                )}
+                  {event.supportPhone && (
+                    <a
+                      href={`tel:${event.supportPhone}`}
+                      className="inline-flex items-center gap-2.5 rounded-full border px-6 py-3 text-sm transition-all hover:opacity-80 active:scale-[0.985]"
+                      style={{
+                        color: event.primaryColor,
+                        fontFamily: event.fontBody,
+                        borderColor: `${event.primaryColor}33`,
+                        backgroundColor: `${event.primaryColor}08`,
+                      }}
+                    >
+                      <Phone className="w-4 h-4" />
+                      {event.supportPhone}
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -197,6 +119,8 @@ export default function EventDetails({ event }: { event: EventData }) {
     </section>
   );
 }
+
+/* ====================== Card Component ====================== */
 
 function Card({
   icon,
@@ -214,18 +138,19 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[28px] border border-stone-200/70 bg-white/80 p-7 shadow-[0_18px_45px_rgba(120,98,72,0.08)] backdrop-blur-sm">
+    <div className="relative overflow-hidden rounded-[28px] border border-stone-200/70 bg-white/80 p-8 shadow-[0_18px_45px_rgba(120,98,72,0.08)] backdrop-blur-sm">
+      {/* Top accent line */}
       <div
         className="absolute inset-x-0 top-0 h-px"
         style={{
           background: `linear-gradient(90deg, transparent, ${primaryColor}, transparent)`,
-          opacity: 0.4,
+          opacity: 0.45,
         }}
       />
 
-      <div className="flex items-center gap-4 mb-5">
+      <div className="flex items-center gap-4 mb-6">
         <span
-          className="flex h-11 w-11 items-center justify-center rounded-full border"
+          className="flex h-12 w-12 items-center justify-center rounded-full border"
           style={{
             color: primaryColor,
             borderColor: `${primaryColor}33`,
@@ -243,7 +168,7 @@ function Card({
             Informação
           </p>
           <h3
-            className="text-xl text-stone-800"
+            className="text-2xl text-stone-800 tracking-tight"
             style={{ fontFamily: fontDisplay }}
           >
             {title}
