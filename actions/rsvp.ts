@@ -47,15 +47,36 @@ export async function submitRsvp(input: RsvpInput) {
     },
   });
 
+  // Remove old companions
   await prisma.guestCompanion.deleteMany({ where: { guestId: guest.id } });
 
-  if (input.attending && input.companions.length > 0) {
-    await prisma.guestCompanion.createMany({
-      data: input.companions.map((c) => ({
+  if (input.attending && input.totalAttending > 1) {
+    const needed = input.totalAttending - 1;
+    const provided = input.companions ?? [];
+
+    const companionsToCreate = [];
+
+    for (let i = 0; i < needed; i++) {
+      const companion = provided[i];
+      let companionName: string;
+
+      if (companion && companion.name && companion.name.trim() !== "") {
+        // Use provided name if available
+        companionName = companion.name;
+      } else {
+        // No name given – use the main guest's name
+        companionName = guest.primaryName;
+      }
+
+      companionsToCreate.push({
         guestId: guest.id,
-        name: c.name,
-        dietaryRestrictions: c.dietaryRestrictions,
-      })),
+        name: companionName,
+        dietaryRestrictions: companion?.dietaryRestrictions ?? null,
+      });
+    }
+
+    await prisma.guestCompanion.createMany({
+      data: companionsToCreate,
     });
   }
 

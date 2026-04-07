@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import type { RsvpFields } from "@/components/invitation/RsvpForm";
 import type { ProgramItem } from "@/components/invitation/ProgramSection";
+import type { GiftItem } from "@/app/admin/settings/GiftListEditor"; // adjust path to match your project
 
 export async function getAllEvents() {
   await requireSuperAdmin();
@@ -212,13 +213,14 @@ export async function updateMyEvent(
     fontBody: string;
     programItems: ProgramItem[];
     rsvpFields: RsvpFields;
+    giftList: GiftItem[]; // ← NEW
   }>,
 ) {
   const { eventId } = await requireEventAccess();
 
   // Extract and serialize Json fields separately to avoid Prisma's conflicting
   // generated types between node_modules/.prisma and generated/prisma paths.
-  const { programItems, rsvpFields, date, ...rest } = data;
+  const { programItems, rsvpFields, giftList, date, ...rest } = data;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const event = await (prisma.event.update as any)({
@@ -231,6 +233,9 @@ export async function updateMyEvent(
         : {}),
       ...(rsvpFields !== undefined
         ? { rsvpFields: JSON.parse(JSON.stringify(rsvpFields)) }
+        : {}),
+      ...(giftList !== undefined
+        ? { giftList: JSON.parse(JSON.stringify(giftList)) }
         : {}),
     },
   });

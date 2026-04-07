@@ -23,6 +23,10 @@ export interface ProgramItem {
   label: string;
   time: string;
   notes?: string;
+  /** Optional venue name shown as the link text (falls back to "Ver no mapa") */
+  locationLabel?: string;
+  /** Optional Google Maps URL – renders a clickable pin link on the invitation */
+  locationUrl?: string;
 }
 
 const ICONS: Record<ProgramItemType, React.ReactNode> = {
@@ -120,12 +124,8 @@ const ICONS: Record<ProgramItemType, React.ReactNode> = {
       <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8" />
       <path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2 1 2 1" />
       <path d="M2 21h20" />
-      <path d="M7 8v3" />
-      <path d="M12 8v3" />
-      <path d="M17 8v3" />
-      <path d="M7 4h.01" />
-      <path d="M12 4h.01" />
-      <path d="M17 4h.01" />
+      <path d="M7 8v3M12 8v3M17 8v3" />
+      <path d="M7 4h.01M12 4h.01M17 4h.01" />
     </svg>
   ),
   MUSIC: (
@@ -242,6 +242,24 @@ const ICONS: Record<ProgramItemType, React.ReactNode> = {
   ),
 };
 
+/** Inline map-pin icon used inside the location link */
+function PinIcon({ color }: { color: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-3.5 h-3.5 flex-shrink-0"
+    >
+      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
 export default function ProgramSection({
   event,
 }: {
@@ -342,6 +360,23 @@ export default function ProgramSection({
                       >
                         {item.notes}
                       </p>
+                    )}
+
+                    {/* ── Location link ── */}
+                    {item.locationUrl && (
+                      <a
+                        href={item.locationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 mt-3 text-xs transition-opacity hover:opacity-70"
+                        style={{
+                          color: event.primaryColor,
+                          fontFamily: event.fontBody,
+                        }}
+                      >
+                        <PinIcon color={event.primaryColor} />
+                        {item.locationLabel?.trim() || "Ver no mapa"}
+                      </a>
                     )}
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { updateMyEvent } from "@/actions/events";
 import { useRouter } from "next/navigation";
 import ProgramEditor, { type ProgramItem } from "./ProgramEditor";
+import GiftListEditor, { type GiftItem } from "./GiftListEditor"; // ← NEW
 import type { RsvpFields } from "../../../components/invitation/RsvpForm";
 
 const FONT_DISPLAY_OPTIONS = [
@@ -34,9 +35,10 @@ interface EventSnapshot {
   fontBody: string;
   programItems?: unknown; // JSON from Prisma
   rsvpFields?: unknown; // JSON from Prisma
+  giftList?: unknown; // JSON from Prisma ← NEW
 }
 
-type Tab = "details" | "branding" | "program" | "rsvp";
+type Tab = "details" | "branding" | "program" | "gifts" | "rsvp";
 
 export default function SettingsForm({ event }: { event: EventSnapshot }) {
   const router = useRouter();
@@ -75,6 +77,11 @@ export default function SettingsForm({ event }: { event: EventSnapshot }) {
     Array.isArray(event.programItems)
       ? (event.programItems as ProgramItem[])
       : [],
+  );
+
+  // ── Gift list ─────────────────────────────────────────────────────────────── ← NEW
+  const [giftList, setGiftList] = useState<GiftItem[]>(
+    Array.isArray(event.giftList) ? (event.giftList as GiftItem[]) : [],
   );
 
   // ── RSVP fields ──────────────────────────────────────────────────────────────
@@ -123,10 +130,9 @@ export default function SettingsForm({ event }: { event: EventSnapshot }) {
           backgroundStyle: bgStyle,
           fontDisplay,
           fontBody,
-          // Pass through as JSON — make sure updateMyEvent accepts these
-          // (add them to the Partial<> type in events.ts)
           programItems: programItems as any,
           rsvpFields: rsvpFields as any,
+          giftList: giftList as any, // ← NEW
         });
         setSaved(true);
         router.refresh();
@@ -144,6 +150,7 @@ export default function SettingsForm({ event }: { event: EventSnapshot }) {
     { id: "details", label: "Details" },
     { id: "branding", label: "Branding" },
     { id: "program", label: "Program" },
+    { id: "gifts", label: "Gifts" }, // ← NEW
     { id: "rsvp", label: "RSVP" },
   ];
 
@@ -526,6 +533,102 @@ export default function SettingsForm({ event }: { event: EventSnapshot }) {
                         </p>
                       )}
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── GIFTS TAB ───────────────────────────────────────────────────────── */}
+      {tab === "gifts" && (
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-100 rounded px-4 py-3">
+            <p
+              className="text-amber-700 text-xs leading-relaxed"
+              style={{ fontFamily: fontBody }}
+            >
+              Build your gift list. Add physical gift ideas (with an optional
+              store link) or monetary contribution options with bank transfer
+              and/or mobile wallet details. Guests will see this as a beautiful
+              section on their invitation page.
+            </p>
+          </div>
+
+          <div className="bg-white border border-stone-200 rounded p-6">
+            <GiftListEditor
+              items={giftList}
+              onChange={setGiftList}
+              primaryColor={primaryColor}
+              fontBody={fontBody}
+            />
+          </div>
+
+          {/* Mini preview */}
+          {giftList.length > 0 && (
+            <div className="bg-white border border-stone-200 rounded p-6">
+              <p
+                className="text-stone-400 text-xs uppercase tracking-widest mb-4"
+                style={{ fontFamily: fontBody }}
+              >
+                Preview
+              </p>
+              <div className="space-y-3">
+                {giftList.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-start gap-3 p-3 rounded-lg border border-stone-100"
+                  >
+                    <span
+                      className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-base"
+                      style={{ backgroundColor: `${primaryColor}12` }}
+                    >
+                      {item.type === "MONETARY" ? "💳" : "🎁"}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className="text-stone-700 text-sm font-medium truncate"
+                        style={{ fontFamily: fontBody }}
+                      >
+                        {item.name || "—"}
+                      </p>
+                      {item.type === "ITEM" && item.store && (
+                        <p
+                          className="text-stone-400 text-xs mt-0.5"
+                          style={{ fontFamily: fontBody }}
+                        >
+                          {item.store}
+                        </p>
+                      )}
+                      {item.type === "MONETARY" && item.suggestedAmount && (
+                        <p
+                          className="text-xs mt-0.5"
+                          style={{ color: primaryColor, fontFamily: fontBody }}
+                        >
+                          {item.currency ?? ""}{" "}
+                          {item.suggestedAmount.toLocaleString()}
+                        </p>
+                      )}
+                      {item.note && (
+                        <p
+                          className="text-stone-400 text-xs mt-0.5 truncate"
+                          style={{ fontFamily: fontBody }}
+                        >
+                          {item.note}
+                        </p>
+                      )}
+                    </div>
+                    <span
+                      className="flex-shrink-0 text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full"
+                      style={{
+                        color: primaryColor,
+                        backgroundColor: `${primaryColor}12`,
+                        fontFamily: fontBody,
+                      }}
+                    >
+                      {item.type === "MONETARY" ? "monetary" : "gift"}
+                    </span>
                   </div>
                 ))}
               </div>

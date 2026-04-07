@@ -63,6 +63,9 @@ model Event {
   // Program timeline — ordered array of { id, type, label, time, notes? }
   programItems Json @default("[]")
 
+  // Gift list — ordered array of GiftItem objects (see GiftListEditor.tsx for shape)
+  giftList Json @default("[]")
+
   // RSVP form field visibility — { companions, dietary, transport, message }
   rsvpFields Json @default("{\"companions\":true,\"dietary\":true,\"transport\":true,\"message\":true}")
 

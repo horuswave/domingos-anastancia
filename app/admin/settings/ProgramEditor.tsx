@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, GripVertical } from "lucide-react";
-import type { ProgramItem, ProgramItemType } from "../../../components/invitation/ProgramSection";
+import { Plus, Trash2, MapPin } from "lucide-react";
+import type {
+  ProgramItem,
+  ProgramItemType,
+} from "../../../components/invitation/ProgramSection";
 
 // Re-export so SettingsForm only needs one import
 export type { ProgramItem, ProgramItemType };
@@ -44,6 +47,8 @@ function newItem(): ProgramItem {
     label: "",
     time: "",
     notes: "",
+    locationLabel: "",
+    locationUrl: "",
   };
 }
 
@@ -60,6 +65,14 @@ export default function ProgramEditor({
   primaryColor,
   fontBody,
 }: Props) {
+  // Track which item IDs have the location row expanded
+  const [openLocation, setOpenLocation] = useState<Set<string>>(
+    () =>
+      new Set(
+        items.filter((i) => i.locationUrl || i.locationLabel).map((i) => i.id),
+      ),
+  );
+
   const inputCls =
     "w-full px-3 py-2 border border-stone-200 rounded text-sm focus:outline-none focus:border-stone-400 bg-white";
 
@@ -77,6 +90,11 @@ export default function ProgramEditor({
 
   function removeItem(id: string) {
     onChange(items.filter((i) => i.id !== id));
+    setOpenLocation((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   }
 
   function update<K extends keyof ProgramItem>(
@@ -87,7 +105,6 @@ export default function ProgramEditor({
     onChange(items.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
   }
 
-  // Simple move up/down (drag-and-drop can be added later)
   function move(id: string, dir: -1 | 1) {
     const idx = items.findIndex((i) => i.id === id);
     if (idx < 0) return;
@@ -96,6 +113,21 @@ export default function ProgramEditor({
     const copy = [...items];
     [copy[idx], copy[next]] = [copy[next], copy[idx]];
     onChange(copy);
+  }
+
+  function toggleLocation(id: string) {
+    setOpenLocation((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        // Clear values when closing
+        update(id, "locationLabel", "");
+        update(id, "locationUrl", "");
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   }
 
   return (
@@ -109,114 +141,160 @@ export default function ProgramEditor({
         </p>
       )}
 
-      {items.map((item, idx) => (
-        <div
-          key={item.id}
-          className="border border-stone-200 rounded p-4 bg-white space-y-3"
-        >
-          {/* Row 1: type + time + reorder + delete */}
-          <div className="flex gap-3 items-start">
-            {/* Reorder buttons */}
-            <div className="flex flex-col gap-1 pt-1 flex-shrink-0">
+      {items.map((item, idx) => {
+        const locationOpen = openLocation.has(item.id);
+        return (
+          <div
+            key={item.id}
+            className="border border-stone-200 rounded p-4 bg-white space-y-3"
+          >
+            {/* Row 1: type + time + reorder + delete */}
+            <div className="flex gap-3 items-start">
+              {/* Reorder buttons */}
+              <div className="flex flex-col gap-1 pt-1 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => move(item.id, -1)}
+                  disabled={idx === 0}
+                  className="text-stone-300 hover:text-stone-500 disabled:opacity-20 transition-colors"
+                  title="Move up"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                  >
+                    <path d="M18 15l-6-6-6 6" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(item.id, 1)}
+                  disabled={idx === items.length - 1}
+                  className="text-stone-300 hover:text-stone-500 disabled:opacity-20 transition-colors"
+                  title="Move down"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Type select */}
+              <select
+                value={item.type}
+                onChange={(e) =>
+                  update(item.id, "type", e.target.value as ProgramItemType)
+                }
+                className={`${inputCls} flex-1`}
+                style={{ fontFamily: fontBody }}
+              >
+                {Object.entries(grouped).map(([cat, opts]) => (
+                  <optgroup key={cat} label={cat}>
+                    {opts.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+
+              {/* Time */}
+              <input
+                type="text"
+                placeholder="e.g. 7:00 PM"
+                value={item.time}
+                onChange={(e) => update(item.id, "time", e.target.value)}
+                className={`${inputCls} w-28 flex-shrink-0`}
+                style={{ fontFamily: fontBody }}
+              />
+
+              {/* Delete */}
               <button
                 type="button"
-                onClick={() => move(item.id, -1)}
-                disabled={idx === 0}
-                className="text-stone-300 hover:text-stone-500 disabled:opacity-20 transition-colors"
-                title="Move up"
+                onClick={() => removeItem(item.id)}
+                className="text-stone-300 hover:text-red-400 transition-colors pt-2 flex-shrink-0"
               >
-                <svg
-                  className="w-3.5 h-3.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                  strokeLinecap="round"
-                >
-                  <path d="M18 15l-6-6-6 6" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => move(item.id, 1)}
-                disabled={idx === items.length - 1}
-                className="text-stone-300 hover:text-stone-500 disabled:opacity-20 transition-colors"
-                title="Move down"
-              >
-                <svg
-                  className="w-3.5 h-3.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                  strokeLinecap="round"
-                >
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Type select */}
-            <select
-              value={item.type}
-              onChange={(e) =>
-                update(item.id, "type", e.target.value as ProgramItemType)
-              }
-              className={`${inputCls} flex-1`}
-              style={{ fontFamily: fontBody }}
-            >
-              {Object.entries(grouped).map(([cat, opts]) => (
-                <optgroup key={cat} label={cat}>
-                  {opts.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-
-            {/* Time */}
+            {/* Row 2: custom label */}
             <input
               type="text"
-              placeholder="e.g. 7:00 PM"
-              value={item.time}
-              onChange={(e) => update(item.id, "time", e.target.value)}
-              className={`${inputCls} w-28 flex-shrink-0`}
+              placeholder="Label shown on the invitation (e.g. Welcome Drinks)"
+              value={item.label}
+              onChange={(e) => update(item.id, "label", e.target.value)}
+              className={inputCls}
               style={{ fontFamily: fontBody }}
             />
 
-            {/* Delete */}
-            <button
-              type="button"
-              onClick={() => removeItem(item.id)}
-              className="text-stone-300 hover:text-red-400 transition-colors pt-2 flex-shrink-0"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {/* Row 3: optional notes */}
+            <input
+              type="text"
+              placeholder="Short note for guests (optional)"
+              value={item.notes ?? ""}
+              onChange={(e) => update(item.id, "notes", e.target.value)}
+              className={inputCls}
+              style={{ fontFamily: fontBody, color: "#78716c" }}
+            />
+
+            {/* Row 4: location toggle + fields */}
+            <div>
+              <button
+                type="button"
+                onClick={() => toggleLocation(item.id)}
+                className="flex items-center gap-1.5 text-xs transition-colors"
+                style={{
+                  color: locationOpen ? primaryColor : "#a8a29e",
+                  fontFamily: fontBody,
+                }}
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                {locationOpen
+                  ? "Remove location"
+                  : "Add location (Google Maps)"}
+              </button>
+
+              {locationOpen && (
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
+                  <input
+                    type="url"
+                    placeholder="Google Maps URL (https://maps.google.com/…)"
+                    value={item.locationUrl ?? ""}
+                    onChange={(e) =>
+                      update(item.id, "locationUrl", e.target.value)
+                    }
+                    className={inputCls}
+                    style={{ fontFamily: fontBody }}
+                  />
+                  <input
+                    type="text"
+                    placeholder='Link label (e.g. "Igreja da Sé")'
+                    value={item.locationLabel ?? ""}
+                    onChange={(e) =>
+                      update(item.id, "locationLabel", e.target.value)
+                    }
+                    className={`${inputCls} sm:w-52`}
+                    style={{ fontFamily: fontBody }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-
-          {/* Row 2: custom label */}
-          <input
-            type="text"
-            placeholder="Label shown on the invitation (e.g. Welcome Drinks)"
-            value={item.label}
-            onChange={(e) => update(item.id, "label", e.target.value)}
-            className={inputCls}
-            style={{ fontFamily: fontBody }}
-          />
-
-          {/* Row 3: optional notes */}
-          <input
-            type="text"
-            placeholder="Short note for guests (optional)"
-            value={item.notes ?? ""}
-            onChange={(e) => update(item.id, "notes", e.target.value)}
-            className={inputCls}
-            style={{ fontFamily: fontBody, color: "#78716c" }}
-          />
-        </div>
-      ))}
+        );
+      })}
 
       <button
         type="button"
