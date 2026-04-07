@@ -303,6 +303,7 @@ export default function ProgramSection({
             style={{ fontFamily: event.fontBody }}
           >
             Um percurso desenhado com momentos especiais
+          </p>
         </div>
 
         <div className="relative pl-2 md:pl-4">
