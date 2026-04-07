@@ -254,7 +254,8 @@ export default function RsvpForm({
                                 onChange={(e) =>
                                   updateCompanion(i, "name", e.target.value)
                                 }
-                                required
+                                // ❌ remove the 'required' attribute
+                                // ✅ name is now optional
                                 className={inputCls}
                                 style={{
                                   fontFamily: event.fontBody,
@@ -313,7 +314,6 @@ export default function RsvpForm({
                     )}
                   </div>
                 )}
-
                 {fields.dietary && (
                   <Field
                     label="Restrições alimentares"
@@ -332,7 +332,6 @@ export default function RsvpForm({
                     />
                   </Field>
                 )}
-
                 {fields.transport && (
                   <Field
                     label="Notas de transporte ou logística"
