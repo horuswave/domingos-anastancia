@@ -298,39 +298,43 @@ export default function GuestList({
 
                   {/* Actions */}
                   <td className="px-5 py-4">
-  <div className="flex items-center gap-1 justify-end">
-    <SendInviteButton
-      guestId={g.id}
-      preferredContact={g.preferredContact}
-      hasPhone={!!g.phone}
-      primaryColor={primary}
-      fontBody={font}
-      compact
-    />
-    <button
-      onClick={() => handleCopy(g.token, g.id)}
-      title="Copy invite link"
-      className="p-1.5 text-stone-400 hover:text-stone-700 transition-colors"
-    >
-      {copiedId === g.id
-        ? <Check className="w-4 h-4 text-emerald-500" />
-        : <Copy  className="w-4 h-4" />}
-    </button>
-    <Link href={`/admin/guests/${g.id}`}
-      title="Edit guest"
-      className="p-1.5 text-stone-400 hover:text-stone-700 transition-colors">
-      <Pencil className="w-4 h-4" />
-    </Link>
-    <button
-      onClick={() => handleDelete(g.id, g.primaryName)}
-      disabled={deletingId === g.id}
-      title="Delete guest"
-      className="p-1.5 text-stone-400 hover:text-red-500 transition-colors disabled:opacity-40"
-    >
-      <Trash2 className="w-4 h-4" />
-    </button>
-  </div>
-</td>
+                    <div className="flex items-center gap-1 justify-end">
+                      <SendInviteButton
+                        guestName={g.primaryName}
+                        guestPhone={g.phone ?? ""}
+                        primaryColor={primary}
+                        fontBody={font}
+                        compact
+                      />
+
+                      <button
+                        onClick={() => handleCopy(g.token, g.id)}
+                        title="Copy invite link"
+                        className="p-1.5 text-stone-400 hover:text-stone-700 transition-colors"
+                      >
+                        {copiedId === g.id ? (
+                          <Check className="w-4 h-4 text-emerald-500" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </button>
+                      <Link
+                        href={`/admin/guests/${g.id}`}
+                        title="Edit guest"
+                        className="p-1.5 text-stone-400 hover:text-stone-700 transition-colors"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(g.id, g.primaryName)}
+                        disabled={deletingId === g.id}
+                        title="Delete guest"
+                        className="p-1.5 text-stone-400 hover:text-red-500 transition-colors disabled:opacity-40"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

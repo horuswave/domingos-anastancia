@@ -1,57 +1,57 @@
 "use client";
 
 import { useState } from "react";
-import { sendInvitation } from "@/actions/invitations";
 import { useRouter } from "next/navigation";
-import { Send, Check, X } from "lucide-react";
+import { Send, Check } from "lucide-react";
 
 interface Props {
-  guestId: string;
-  preferredContact: string;
-  hasPhone: boolean;
+  guestName: string;
+  guestPhone: string; // E.164 format, e.g. "+258841234567"
   messageType?: "INVITATION" | "REMINDER";
   primaryColor?: string;
   fontBody?: string;
-  compact?: boolean; // true = icon only (for table rows)
+  compact?: boolean;
+}
+
+const TEMPLATE = (name: string) =>
+  `Estimado(a) ${name}
+É com muita alegria que partilhamos o convite para a celebração das nossas Bodas de Ouro.
+É um momento muito especial para nós e será uma honra contar com a vossa presença.
+Segue abaixo o convite com todos os detalhes.
+Com carinho,
+Anastacia e Domingos Congolo`;
+
+function buildWhatsAppUrl(phone: string, message: string) {
+  // Strip non-digits except leading +
+  const cleaned = phone.replace(/[^\d+]/g, "");
+  const encoded = encodeURIComponent(message);
+  return `https://wa.me/${cleaned}?text=${encoded}`;
 }
 
 export default function SendInviteButton({
-  guestId,
-  preferredContact,
-  hasPhone,
+  guestName,
+  guestPhone,
   messageType = "INVITATION",
   primaryColor = "#c8890e",
   fontBody = "system-ui",
   compact = false,
 }: Props) {
   const router = useRouter();
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "failed">(
-    "idle",
-  );
-  const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [state, setState] = useState<"idle" | "opened">("idle");
 
-  const canSend =
-    preferredContact === "MANUAL" ||
-    ((preferredContact === "SMS" || preferredContact === "WHATSAPP") &&
-      hasPhone);
+  const hasPhone = !!guestPhone?.trim();
 
-  async function handleSend() {
-    if (!canSend) return;
-    setState("sending");
-    setErrMsg(null);
-    const result = await sendInvitation(guestId, messageType);
-    if (result.success) {
-      setState("sent");
-      router.refresh();
-      setTimeout(() => setState("idle"), 3000);
-    } else {
-      setState("failed");
-      setErrMsg(result.error ?? "Failed");
-      setTimeout(() => setState("idle"), 4000);
-    }
+  function handleSend() {
+    if (!hasPhone) return;
+    const message = TEMPLATE(guestName);
+    const url = buildWhatsAppUrl(guestPhone, message);
+    window.open(url, "_blank");
+    setState("opened");
+    router.refresh();
+    setTimeout(() => setState("idle"), 4000);
   }
 
-  if (!canSend) {
+  if (!hasPhone) {
     return compact ? null : (
       <span className="text-xs text-stone-400" style={{ fontFamily: fontBody }}>
         No phone number
@@ -63,22 +63,12 @@ export default function SendInviteButton({
     return (
       <button
         onClick={handleSend}
-        disabled={state === "sending"}
         title={messageType === "REMINDER" ? "Send reminder" : "Send invitation"}
-        className="p-1.5 transition-colors disabled:opacity-40"
-        style={{
-          color:
-            state === "sent"
-              ? "#10b981"
-              : state === "failed"
-                ? "#ef4444"
-                : "#a8a29e",
-        }}
+        className="p-1.5 transition-colors"
+        style={{ color: state === "opened" ? "#10b981" : "#a8a29e" }}
       >
-        {state === "sent" ? (
+        {state === "opened" ? (
           <Check className="w-4 h-4" />
-        ) : state === "failed" ? (
-          <X className="w-4 h-4" />
         ) : (
           <Send className="w-4 h-4" />
         )}
@@ -87,38 +77,21 @@ export default function SendInviteButton({
   }
 
   return (
-    <div className="space-y-1">
-      <button
-        onClick={handleSend}
-        disabled={state === "sending"}
-        className="flex items-center gap-2 px-5 py-2.5 rounded text-white text-sm tracking-wide uppercase transition-all disabled:opacity-50"
-        style={{ backgroundColor: primaryColor, fontFamily: fontBody }}
-      >
-        {state === "sending" ? (
-          <>
-            <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-            Sending…
-          </>
-        ) : state === "sent" ? (
-          <>
-            <Check className="w-4 h-4" /> Sent!
-          </>
-        ) : state === "failed" ? (
-          <>
-            <X className="w-4 h-4" /> Failed
-          </>
-        ) : (
-          <>
-            <Send className="w-4 h-4" />{" "}
-            {messageType === "REMINDER" ? "Send Reminder" : "Send Invitation"}
-          </>
-        )}
-      </button>
-      {errMsg && (
-        <p className="text-red-500 text-xs" style={{ fontFamily: fontBody }}>
-          {errMsg}
-        </p>
+    <button
+      onClick={handleSend}
+      className="flex items-center gap-2 px-5 py-2.5 rounded text-white text-sm tracking-wide uppercase transition-all"
+      style={{ backgroundColor: primaryColor, fontFamily: fontBody }}
+    >
+      {state === "opened" ? (
+        <>
+          <Check className="w-4 h-4" /> Opened!
+        </>
+      ) : (
+        <>
+          <Send className="w-4 h-4" />
+          {messageType === "REMINDER" ? "Send Reminder" : "Send Invitation"}
+        </>
       )}
-    </div>
+    </button>
   );
 }
