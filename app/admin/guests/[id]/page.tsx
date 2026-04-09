@@ -50,17 +50,15 @@ const [guest, event, logs] = await Promise.all([
       </header>
       <div className="flex gap-3 mb-6">
         <SendInviteButton
-          guestId={guest.id}
-          preferredContact={guest.preferredContact}
-          hasPhone={!!guest.phone}
+          guestName={guest.primaryName}
+          guestPhone={guest.phone ?? ""}
           messageType="INVITATION"
           primaryColor={event?.primaryColor}
           fontBody={event?.fontBody}
         />
         <SendInviteButton
-          guestId={guest.id}
-          preferredContact={guest.preferredContact}
-          hasPhone={!!guest.phone}
+          guestName={guest.primaryName}
+          guestPhone={guest.phone ?? ""}
           messageType="REMINDER"
           primaryColor={event?.primaryColor}
           fontBody={event?.fontBody}
