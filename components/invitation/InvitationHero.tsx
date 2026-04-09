@@ -334,7 +334,7 @@ export default function InvitationHero({
             </div>
           )}
 
-          {/* <div
+          <div
             className="hero-fade-up"
             style={{
               animationDelay: "0.9s",
@@ -371,7 +371,7 @@ export default function InvitationHero({
               {formatTime24h(event.time)}
             </p>
 
-            <p
+            {/* <p
               style={{
                 fontFamily: event.fontBody,
                 fontSize: "0.78rem",
@@ -382,8 +382,8 @@ export default function InvitationHero({
               }}
             >
               {event.venue}
-            </p>
-          </div> */}
+            </p> */}
+          </div>
         </div>
 
         <div
