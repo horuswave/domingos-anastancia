@@ -368,7 +368,7 @@ export default function InvitationHero({
                 day: "numeric",
               })}
               {" · "}
-              {formatTime24h(event.time)}
+              {/* {formatTime24h(event.time)} */}
             </p>
 
             {/* <p
