@@ -361,7 +361,9 @@ export default function GiftListSection({
               style={{ fontFamily: event.fontBody }}
             >
               A vossa presença honra-nos profundamente. Caso deseje oferecer um
-              presente, pedimos gentilmente que seja em numerário.
+              presente, pedimos gentilmente que seja em numerário, através das
+              contas abaixo indicadas. Estará igualmente disponível, no salão,
+              uma caixa para o efeito.
             </p>
           </div>
 
