@@ -6,23 +6,23 @@ import { Send, Check } from "lucide-react";
 
 interface Props {
   guestName: string;
-  guestPhone: string; // E.164 format, e.g. "+258841234567"
+  guestPhone: string;
+  inviteToken?: string;
   messageType?: "INVITATION" | "REMINDER";
   primaryColor?: string;
   fontBody?: string;
   compact?: boolean;
 }
 
-const TEMPLATE = (name: string) =>
+const TEMPLATE = (name: string, inviteUrl?: string) =>
   `Estimado(a) ${name}
 É com muita alegria que partilhamos o convite para a celebração das nossas Bodas de Ouro.
 É um momento muito especial para nós e será uma honra contar com a vossa presença.
 Segue abaixo o convite com todos os detalhes.
 Com carinho,
-Anastacia e Domingos Congolo`;
+Anastacia e Domingos Congolo${inviteUrl ? `\n\n${inviteUrl}` : ""}`;
 
 function buildWhatsAppUrl(phone: string, message: string) {
-  // Strip non-digits except leading +
   const cleaned = phone.replace(/[^\d+]/g, "");
   const encoded = encodeURIComponent(message);
   return `https://wa.me/${cleaned}?text=${encoded}`;
@@ -31,6 +31,7 @@ function buildWhatsAppUrl(phone: string, message: string) {
 export default function SendInviteButton({
   guestName,
   guestPhone,
+  inviteToken,
   messageType = "INVITATION",
   primaryColor = "#c8890e",
   fontBody = "system-ui",
@@ -43,7 +44,10 @@ export default function SendInviteButton({
 
   function handleSend() {
     if (!hasPhone) return;
-    const message = TEMPLATE(guestName);
+    const inviteUrl = inviteToken
+      ? `${window.location.origin}/invite/${inviteToken}`
+      : undefined;
+    const message = TEMPLATE(guestName, inviteUrl);
     const url = buildWhatsAppUrl(guestPhone, message);
     window.open(url, "_blank");
     setState("opened");

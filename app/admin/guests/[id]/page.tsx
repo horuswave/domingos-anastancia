@@ -52,6 +52,7 @@ const [guest, event, logs] = await Promise.all([
         <SendInviteButton
           guestName={guest.primaryName}
           guestPhone={guest.phone ?? ""}
+          inviteToken={guest.token} // add this
           messageType="INVITATION"
           primaryColor={event?.primaryColor}
           fontBody={event?.fontBody}
@@ -59,6 +60,7 @@ const [guest, event, logs] = await Promise.all([
         <SendInviteButton
           guestName={guest.primaryName}
           guestPhone={guest.phone ?? ""}
+          inviteToken={guest.token} // add this
           messageType="REMINDER"
           primaryColor={event?.primaryColor}
           fontBody={event?.fontBody}

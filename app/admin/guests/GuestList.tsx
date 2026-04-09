@@ -302,6 +302,7 @@ export default function GuestList({
                       <SendInviteButton
                         guestName={g.primaryName}
                         guestPhone={g.phone ?? ""}
+                        inviteToken={g.token} // add this
                         primaryColor={primary}
                         fontBody={font}
                         compact
