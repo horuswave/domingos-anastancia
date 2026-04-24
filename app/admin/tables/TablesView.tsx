@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createTable, updateTable, deleteTable } from "@/actions/tables";
 import { assignTable } from "@/actions/guests";
-import { Plus, Trash2, Pencil, Check, X, Users } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X, Users, Download } from "lucide-react";
 
 interface Guest {
   id: string;
@@ -27,6 +27,226 @@ interface Event {
   fontDisplay: string;
 }
 
+// ─── Export helper ────────────────────────────────────────────────────────────
+
+function getOccupancy(table: Table) {
+  return table.guests.reduce((s, g) => s + (g.rsvp?.totalAttending ?? 1), 0);
+}
+
+async function exportTablesToDOCX(tables: Table[]) {
+  // Dynamically import docx so it's only bundled client-side
+  const {
+    Document,
+    Packer,
+    Paragraph,
+    TextRun,
+    AlignmentType,
+    BorderStyle,
+    HeadingLevel,
+  } = await import("docx");
+
+  const divider = new Paragraph({
+    border: {
+      bottom: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC", space: 1 },
+    },
+    spacing: { after: 0 },
+    children: [],
+  });
+
+  const children: InstanceType<typeof Paragraph>[] = [
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 400 },
+      children: [
+        new TextRun({
+          text: "Distribuição de Mesas",
+          bold: true,
+          size: 36,
+          font: "Arial",
+        }),
+      ],
+    }),
+  ];
+
+  tables.forEach((table, idx) => {
+    const occ = getOccupancy(table);
+    const empty = table.capacity - occ;
+
+    // Table name + occupancy
+    children.push(
+      new Paragraph({
+        spacing: { before: idx === 0 ? 0 : 440, after: 80 },
+        children: [
+          new TextRun({
+            text: table.name,
+            bold: true,
+            size: 28,
+            font: "Arial",
+          }),
+          new TextRun({
+            text: `  —  ${occ} / ${table.capacity} lugares`,
+            size: 22,
+            font: "Arial",
+            color: "666666",
+          }),
+        ],
+      }),
+    );
+
+    // Optional table notes
+    if (table.notes) {
+      children.push(
+        new Paragraph({
+          spacing: { before: 0, after: 80 },
+          indent: { left: 360 },
+          children: [
+            new TextRun({
+              text: table.notes,
+              italics: true,
+              size: 20,
+              font: "Arial",
+              color: "888888",
+            }),
+          ],
+        }),
+      );
+    }
+
+    // Guest list
+    if (table.guests.length === 0) {
+      children.push(
+        new Paragraph({
+          spacing: { before: 60, after: 60 },
+          indent: { left: 360 },
+          children: [
+            new TextRun({
+              text: "Sem convidados atribuídos",
+              italics: true,
+              size: 20,
+              font: "Arial",
+              color: "AAAAAA",
+            }),
+          ],
+        }),
+      );
+    } else {
+      table.guests.forEach((g) => {
+        const seats = g.rsvp?.totalAttending ?? 1;
+        children.push(
+          new Paragraph({
+            spacing: { before: 60, after: 60 },
+            indent: { left: 360 },
+            children: [
+              new TextRun({
+                text: "• ",
+                size: 22,
+                font: "Arial",
+                color: "999999",
+              }),
+              new TextRun({ text: g.primaryName, size: 22, font: "Arial" }),
+              ...(seats > 1
+                ? [
+                    new TextRun({
+                      text: `  (${seats} pessoas)`,
+                      size: 20,
+                      font: "Arial",
+                      color: "999999",
+                    }),
+                  ]
+                : []),
+            ],
+          }),
+        );
+      });
+    }
+
+    // "Falta X nesta mesa" note
+    if (empty > 0) {
+      children.push(
+        new Paragraph({
+          spacing: { before: 140, after: 60 },
+          indent: { left: 360 },
+          children: [
+            new TextRun({
+              text: `Falta ${empty} ${empty === 1 ? "lugar" : "lugares"} nesta mesa`,
+              italics: true,
+              size: 20,
+              font: "Arial",
+              color: "B45309",
+            }),
+          ],
+        }),
+      );
+    } else {
+      children.push(
+        new Paragraph({
+          spacing: { before: 140, after: 60 },
+          indent: { left: 360 },
+          children: [
+            new TextRun({
+              text: "Mesa completa",
+              italics: true,
+              size: 20,
+              font: "Arial",
+              color: "059669",
+            }),
+          ],
+        }),
+      );
+    }
+
+    // Divider between tables
+    if (idx < tables.length - 1) {
+      children.push(divider);
+    }
+  });
+
+  const doc = new Document({
+    styles: {
+      default: { document: { run: { font: "Arial", size: 22 } } },
+      paragraphStyles: [
+        {
+          id: "Heading1",
+          name: "Heading 1",
+          basedOn: "Normal",
+          next: "Normal",
+          quickFormat: true,
+          run: { size: 36, bold: true, font: "Arial", color: "1C1917" },
+          paragraph: {
+            spacing: { before: 240, after: 240 },
+            outlineLevel: 0,
+          },
+        },
+      ],
+    },
+    sections: [
+      {
+        properties: {
+          page: {
+            size: { width: 11906, height: 16838 }, // A4
+            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+          },
+        },
+        children,
+      },
+    ],
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  const blob = new Blob([new Uint8Array(buffer)], {
+    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "mesas.docx";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function TablesView({
   tables,
   unassigned,
@@ -43,7 +263,8 @@ export default function TablesView({
   const [isPending, startTransition] = useTransition();
   const [showNewTable, setShowNewTable] = useState(false);
   const [editingTable, setEditingTable] = useState<string | null>(null);
-  const [assigningGuest, setAssigningGuest] = useState<string | null>(null); // guestId
+  const [assigningGuest, setAssigningGuest] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // New table form
   const [newName, setNewName] = useState("");
@@ -54,10 +275,6 @@ export default function TablesView({
   const [editName, setEditName] = useState("");
   const [editCapacity, setEditCapacity] = useState(8);
   const [editNotes, setEditNotes] = useState("");
-
-  function getOccupancy(table: Table) {
-    return table.guests.reduce((s, g) => s + (g.rsvp?.totalAttending ?? 1), 0);
-  }
 
   function occupancyColor(table: Table) {
     const occ = getOccupancy(table);
@@ -117,6 +334,15 @@ export default function TablesView({
       setAssigningGuest(null);
       router.refresh();
     });
+  }
+
+  async function handleExport() {
+    setIsExporting(true);
+    try {
+      await exportTablesToDOCX(tables);
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   const inputCls =
@@ -204,7 +430,7 @@ export default function TablesView({
                       const fits = occ + seats <= t.capacity;
                       return (
                         <option key={t.id} value={t.id} disabled={!fits}>
-                          {t.name} ({occ}/{t.capacity}){!fits ? " — full" : ""}
+                          {t.name} ({occ}/{t.capacity})
                         </option>
                       );
                     })}
@@ -218,76 +444,66 @@ export default function TablesView({
 
       {/* ── Right: Tables ───────────────────────────────── */}
       <div className="lg:col-span-2 space-y-4">
-        {/* New table button */}
-        <div className="flex justify-end">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between">
           <button
-            onClick={() => setShowNewTable(!showNewTable)}
-            className="flex items-center gap-2 px-4 py-2 rounded text-white text-sm transition-colors"
+            onClick={() => setShowNewTable(true)}
+            disabled={showNewTable}
+            className="flex items-center gap-2 px-4 py-2 rounded text-white text-sm disabled:opacity-40 transition-colors"
             style={{ backgroundColor: primary, fontFamily: font }}
           >
             <Plus className="w-4 h-4" />
             Add Table
           </button>
+
+          {/* ── Export button ── */}
+          <button
+            onClick={handleExport}
+            disabled={isExporting || tables.length === 0}
+            className="flex items-center gap-2 px-4 py-2 rounded border border-stone-200 text-stone-600 text-sm hover:bg-stone-50 disabled:opacity-40 transition-colors"
+            style={{ fontFamily: font }}
+          >
+            <Download className="w-4 h-4" />
+            {isExporting ? "A exportar…" : "Exportar Mesas"}
+          </button>
         </div>
 
         {/* New table form */}
         {showNewTable && (
-          <div className="bg-white border border-stone-200 rounded p-5 space-y-4">
-            <p
+          <div className="bg-white border border-stone-200 rounded p-5 space-y-3">
+            <h3
               className="text-sm font-medium text-stone-700"
               style={{ fontFamily: font }}
             >
               New Table
-            </p>
+            </h3>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
-                <label
-                  className="block text-xs text-stone-400 mb-1"
-                  style={{ fontFamily: font }}
-                >
-                  Table Name
-                </label>
                 <input
                   className={inputCls}
+                  placeholder="Table name…"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  placeholder="Table 1 — Family"
                   style={{ fontFamily: font }}
                 />
               </div>
-              <div>
-                <label
-                  className="block text-xs text-stone-400 mb-1"
-                  style={{ fontFamily: font }}
-                >
-                  Capacity
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={50}
-                  className={inputCls}
-                  value={newCapacity}
-                  onChange={(e) => setNewCapacity(Number(e.target.value))}
-                  style={{ fontFamily: font }}
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                className="block text-xs text-stone-400 mb-1"
-                style={{ fontFamily: font }}
-              >
-                Notes (optional)
-              </label>
               <input
+                type="number"
+                min={1}
+                max={50}
                 className={inputCls}
-                value={newNotes}
-                onChange={(e) => setNewNotes(e.target.value)}
-                placeholder="Near the dance floor…"
+                value={newCapacity}
+                onChange={(e) => setNewCapacity(Number(e.target.value))}
                 style={{ fontFamily: font }}
               />
             </div>
+            <input
+              className={inputCls}
+              placeholder="Notes (optional)…"
+              value={newNotes}
+              onChange={(e) => setNewNotes(e.target.value)}
+              style={{ fontFamily: font }}
+            />
             <div className="flex gap-2">
               <button
                 onClick={handleCreateTable}
